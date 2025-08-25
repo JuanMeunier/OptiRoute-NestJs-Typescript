@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GpsController } from './gps.controller';
-import { GpsService } from './gps.service';
+import { GpsController } from 'src/gps/controllers/gps.controller';
+import { GpsService } from 'src/gps/services/gps.service';
 
 describe('GpsController', () => {
   let controller: GpsController;

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GpsService } from './gps.service';
+import { GpsService } from 'src/gps/services/gps.service';
 
 describe('GpsService', () => {
   let service: GpsService;

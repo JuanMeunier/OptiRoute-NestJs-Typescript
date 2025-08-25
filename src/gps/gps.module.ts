@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { GpsService } from './gps.service';
-import { GpsController } from './gps.controller';
+import { GpsService } from './services/gps.service';
+import { GpsController } from './controllers/gps.controller';
 
 @Module({
   controllers: [GpsController],
   providers: [GpsService],
 })
-export class GpsModule {}
+export class GpsModule { }
