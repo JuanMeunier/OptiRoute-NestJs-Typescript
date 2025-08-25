@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { GpsService } from '../services/gps.service';
 import { CreateGpDto } from '../dto/create-gp.dto';
-import { UpdateGpDto } from '../dto/update-gp.dto';
+import { UpdateGpDto } from '../dto/update-gps.dto';
 
 @Controller('gps')
 export class GpsController {
