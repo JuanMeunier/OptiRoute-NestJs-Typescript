@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { GpsService } from '../services/gps.service';
-import { CreateGpDto } from '../dto/create-gp.dto';
+import { CreateGpsDto } from '../dto/create-gp.dto';
 import { UpdateGpDto } from '../dto/update-gps.dto';
 
 @Controller('gps')
@@ -8,7 +8,7 @@ export class GpsController {
   constructor(private readonly gpsService: GpsService) { }
 
   @Post()
-  create(@Body() createGpDto: CreateGpDto) {
+  create(@Body() createGpDto: CreateGpsDto) {
     return this.gpsService.create(createGpDto);
   }
 

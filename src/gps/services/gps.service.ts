@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { CreateGpDto } from '../dto/create-gp.dto';
+import { CreateGpsDto } from '../dto/create-gp.dto';
 import { UpdateGpDto } from '../dto/update-gps.dto';
 
 @Injectable()
 export class GpsService {
-  create(createGpDto: CreateGpDto) {
+  create(createGpDto: CreateGpsDto) {
     return 'This action adds a new gp';
   }
 
