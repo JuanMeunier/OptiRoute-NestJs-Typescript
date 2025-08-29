@@ -7,6 +7,7 @@ import { RequestModule } from './request/request.module';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { ChatSocketModule } from './chat-socket/chat-socket.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { AuthModule } from './auth/auth.module';
     VehiclesModule,
     GpsModule,
     DriverModule,
-    RequestModule
+    RequestModule,
+    ChatSocketModule
   ],
   controllers: [],
   providers: [],
