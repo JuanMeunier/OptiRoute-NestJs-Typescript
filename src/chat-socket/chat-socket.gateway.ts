@@ -5,7 +5,7 @@ import { UpdateChatSocketDto } from './dto/update-chat-socket.dto';
 
 @WebSocketGateway()
 export class ChatSocketGateway {
-  constructor(private readonly chatSocketService: ChatSocketService) {}
+  constructor(private readonly chatSocketService: ChatSocketService) { }
 
   @SubscribeMessage('createChatSocket')
   create(@MessageBody() createChatSocketDto: CreateChatSocketDto) {
