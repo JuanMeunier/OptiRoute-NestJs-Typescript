@@ -21,27 +21,6 @@ export class Request {
     @Column()
     destinationAddress: string;
 
-    // Coordenadas de origen
-    @Column('decimal', { precision: 10, scale: 6, nullable: true })
-    originLat: number;
-
-    @Column('decimal', { precision: 10, scale: 6, nullable: true })
-    originLng: number;
-
-    // Coordenadas de destino
-    @Column('decimal', { precision: 10, scale: 6, nullable: true })
-    destinationLat: number;
-
-    @Column('decimal', { precision: 10, scale: 6, nullable: true })
-    destinationLng: number;
-
-    // Distancia y tiempo estimados (calculados con Google Maps)
-    @Column('decimal', { precision: 10, scale: 2, nullable: true })
-    estimatedDistance: number;
-
-    @Column('int', { nullable: true })
-    estimatedTime: number; // en minutos
-
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
 
@@ -51,6 +30,13 @@ export class Request {
         default: RequestStatus.PENDING,
     })
     status: RequestStatus;
+
+    // ID del driver que tomó la request (null al inicio)
+    @Column({ nullable: true })
+    driverId: number;
+
+    @Column({ nullable: true })
+    userId: number;
 
     // Relaciones
     @ManyToOne(() => User, (user) => user.requests)

@@ -10,6 +10,7 @@ import {
   HttpStatus,
   ParseIntPipe,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
 
 import {
@@ -24,12 +25,15 @@ import {
 } from '@nestjs/swagger';
 
 import { ChatSocketGateway } from '../../chat-socket/chat-socket.gateway';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { RequestService } from '../services/request.service';
 import { CreateRequestDto } from '../dto/create-request.dto';
 import { UpdateRequestDto } from '../dto/update-request.dto';
 import { Request } from '../entities/request.entity';
+import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
 
 @ApiTags('Requests')
+@UseGuards(JwtAuthGuard)
 @Controller('request')
 export class RequestController {
   private readonly logger = new Logger(RequestController.name);
@@ -66,9 +70,14 @@ export class RequestController {
       },
     },
   })
-  async create(@Body() createRequestDto: CreateRequestDto): Promise<Request> {
+  async create(@Body() createRequestDto: CreateRequestDto, @CurrentUser() user: any): Promise<Request> {
     this.logger.log('Received request to create a new request');
-    return this.requestService.create(createRequestDto);
+    // Asociar el usuario actual al request
+    const requestWithUser = {
+      ...createRequestDto,
+      user: user.userId, // o user.id según tu entidad
+    };
+    return this.requestService.create(requestWithUser);
   }
 
   @Get()
@@ -181,9 +190,25 @@ export class RequestController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRequestDto: UpdateRequestDto,
+    @CurrentUser() driver: any,
   ): Promise<Request> {
-    this.logger.log(`Received request to update request with ID: ${id}`);
-    return this.requestService.update(id, updateRequestDto);
+    // Si el status cambia a "in_progress", asignar driver
+    if (updateRequestDto.status === 'in_progress') {
+      updateRequestDto.driverId = driver.userId; // ⬅️ Asignar driver
+    }
+
+    const updatedRequest = await this.requestService.update(id, updateRequestDto);
+
+    // Crear chat automáticamente
+    if (updateRequestDto.status === 'in_progress') {
+      await this.chatGateway.createChatForRequest(
+        id,
+        updatedRequest.userId, // Cliente
+        driver.userId          // Driver
+      );
+    }
+
+    return updatedRequest;
   }
 
   @Delete(':id')
