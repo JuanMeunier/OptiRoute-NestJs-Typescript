@@ -6,10 +6,12 @@ Permite a los usuarios realizar pedidos, asignar vehículos y conductores, y seg
 
 El sistema cuenta con:  
 🔐 Autenticación y autorización basada en roles.  
-🛡️ Seguridad con bcrypt, rate-limiting y validaciones.  
+🛡️ Seguridad con bcrypt, rate-limiting y validaciones. 
+💬 Chat en tiempo real entre clientes y drivers via WebSockets.
+📚 Documentación API con Swagger. 
 ⚡ Cache con Redis para optimizar consultas.  
 📚 Documentación API con Swagger.  
-📝 Logging y HealthChecks para monitoreo.  
+📝 Logging.  
 🧪 Testing unitario y end-to-end.  
 
 ---
@@ -23,6 +25,8 @@ El sistema cuenta con:
 📍 **Seguimiento GPS simulado** para conocer la ubicación en tiempo real.  
 📊 **Estados de pedidos**: pendiente, asignado, en viaje, completado, cancelado.  
 ⚡ **Cache Redis** para mejorar la velocidad en operaciones frecuentes.  
+💬 **Chat automático** entre cliente y driver cuando se acepta una request.
+
 🔐 **Protección de rutas** con Guards, roles y decoradores.  
 📖 **Documentación interactiva** con Swagger UI.  
 
@@ -33,6 +37,7 @@ El sistema cuenta con:
 - **Node.js**  
 - **NestJS**  
 - **TypeScript**  
+- **WebSocket**
 - **PostgreSQL** (o la BD que prefieras)  
 - **Redis** (cache)  
 - **Bcrypt** (seguridad de contraseñas)  

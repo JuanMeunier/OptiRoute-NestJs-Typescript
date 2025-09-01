@@ -22,6 +22,8 @@ import {
   ApiConflictResponse,
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
+
+import { ChatSocketGateway } from '../../chat-socket/chat-socket.gateway';
 import { RequestService } from '../services/request.service';
 import { CreateRequestDto } from '../dto/create-request.dto';
 import { UpdateRequestDto } from '../dto/update-request.dto';
@@ -31,7 +33,10 @@ import { Request } from '../entities/request.entity';
 @Controller('request')
 export class RequestController {
   private readonly logger = new Logger(RequestController.name);
-  constructor(private readonly requestService: RequestService) { }
+  constructor(
+    private readonly requestService: RequestService,
+    private readonly chatGateway: ChatSocketGateway,
+  ) { }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
