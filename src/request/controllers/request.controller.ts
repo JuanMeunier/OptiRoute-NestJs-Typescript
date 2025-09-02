@@ -26,14 +26,18 @@ import {
 
 import { ChatSocketGateway } from '../../chat-socket/chat-socket.gateway';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
 import { RequestService } from '../services/request.service';
 import { CreateRequestDto } from '../dto/create-request.dto';
 import { UpdateRequestDto } from '../dto/update-request.dto';
 import { Request } from '../entities/request.entity';
 import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { User, UserRole } from 'src/users/entities/user.entity';
 
 @ApiTags('Requests')
-@UseGuards(JwtAuthGuard)
+@Roles(UserRole.CLIENT)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('request')
 export class RequestController {
   private readonly logger = new Logger(RequestController.name);
@@ -197,7 +201,7 @@ export class RequestController {
       updateRequestDto.driverId = driver.userId; // ⬅️ Asignar driver
     }
 
-    const updatedRequest = await this.requestService.update(id, updateRequestDto);
+    const updatedRequest = await this.requestService.update(id, updateRequestDto, driver);
 
     // Crear chat automáticamente
     if (updateRequestDto.status === 'in_progress') {
@@ -249,9 +253,12 @@ export class RequestController {
       },
     },
   })
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: any,
+  ): Promise<void> {
     this.logger.log(`Received request to delete request with ID: ${id}`);
-    return this.requestService.remove(id);
+    return this.requestService.remove(id, user);
   }
 
 

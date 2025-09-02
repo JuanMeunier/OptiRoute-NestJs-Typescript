@@ -1,10 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Logger, UseGuards } from '@nestjs/common';
 import { GpsService } from '../services/gps.service';
 import { CreateGpsDto } from '../dto/create-gp.dto';
 import { UpdateGpDto } from '../dto/update-gps.dto';
 import { GPS } from '../entities/gps.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBadRequestResponse, ApiNotFoundResponse, ApiConflictResponse, ApiInternalServerErrorResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { UserRole } from 'src/users/entities/user.entity';
 
+@ApiTags('GPS')
+@Roles(UserRole.ADMIN) // ⬅️ Para toda la clase
+@UseGuards(JwtAuthGuard, RolesGuard) // ⬅️ Para toda la clase
 @Controller('gps')
 export class GpsController {
   private readonly logger = new Logger(GpsController.name);

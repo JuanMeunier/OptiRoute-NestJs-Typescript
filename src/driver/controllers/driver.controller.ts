@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   ParseIntPipe,
+  UseGuards,
   Logger,
 } from '@nestjs/common';
 
@@ -27,8 +28,15 @@ import { DriverService } from '../services/driver.service';
 import { CreateDriverDto } from '../dto/create-driver.dto';
 import { UpdateDriverDto } from '../dto/update-driver.dto';
 import { Driver } from '../entities/driver.entity';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { UserRole } from 'src/users/entities/user.entity';
+import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
 
 @ApiTags('Driver')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.STAFF, UserRole.ADMIN)
 @Controller('driver')
 export class DriverController {
   private readonly logger = new Logger(DriverController.name);
@@ -186,8 +194,10 @@ export class DriverController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDriverDto: UpdateDriverDto,
+    @CurrentUser() currentUser: Driver,
   ): Promise<Driver> {
-    return this.driverService.update(id, updateDriverDto);
+
+    return this.driverService.update(id, updateDriverDto, currentUser);
   }
 
 
@@ -235,8 +245,11 @@ export class DriverController {
       },
     },
   })
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return this.driverService.remove(id);
+  async remove(
+    @CurrentUser() currentUser: Driver,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
+    return this.driverService.remove(id, currentUser);
   }
 
 

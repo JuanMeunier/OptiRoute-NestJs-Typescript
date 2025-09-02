@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { User } from '../entities/user.entity';
+import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
 
 @Injectable()
 export class UsersService {
@@ -125,13 +126,18 @@ export class UsersService {
     }
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(id: number, updateUserDto: UpdateUserDto, currentUser: User): Promise<User> {
     this.logger.log(`Updating user with ID: ${id}`);
 
     try {
-      const user = await this.findOne(id); // Reutilizar método que ya maneja not found
+      // Verificar que el usuario autenticado es el dueño
+      if (currentUser.id !== id) {
+        this.logger.warn(`User ${currentUser.id} tried to update user ${id}`);
+        throw new ForbiddenException('You can only update your own account');
+      }
 
-      // Si se está actualizando el email, verificar que no exista
+      const user = await this.findOne(id);
+
       if (updateUserDto.email && updateUserDto.email !== user.email) {
         const existingUser = await this.userRepository.findOne({
           where: { email: updateUserDto.email },
@@ -143,16 +149,13 @@ export class UsersService {
         }
       }
 
-      // Si se está actualizando la contraseña, hashearla
       if (updateUserDto.password) {
         updateUserDto.password = await bcrypt.hash(updateUserDto.password, this.saltRounds);
         this.logger.log(`Password updated for user ID: ${id}`);
       }
 
-      // Actualizar el usuario
       await this.userRepository.update(id, updateUserDto);
 
-      // Obtener y retornar el usuario actualizado
       const updatedUser = await this.findOne(id);
       this.logger.log(`User updated successfully: ${updatedUser.email}`);
 
@@ -167,11 +170,17 @@ export class UsersService {
     }
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, currentUser: User): Promise<void> {
     this.logger.log(`Removing user with ID: ${id}`);
 
     try {
-      const user = await this.findOne(id); // Verificar que existe
+      // Verificar que el usuario autenticado es el dueño
+      if (currentUser.id !== id) {
+        this.logger.warn(`User ${currentUser.id} tried to delete user ${id}`);
+        throw new ForbiddenException('You can only delete your own account');
+      }
+
+      const user = await this.findOne(id);
 
       const result = await this.userRepository.delete(id);
 

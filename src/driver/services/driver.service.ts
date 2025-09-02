@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateDriverDto } from '../dto/create-driver.dto';
 import { UpdateDriverDto } from '../dto/update-driver.dto';
 import { Driver } from '../entities/driver.entity';
+import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
 
 @Injectable()
 export class DriverService {
@@ -39,7 +40,7 @@ export class DriverService {
     return driver;
   }
 
-  async update(id: number, updateDriverDto: UpdateDriverDto): Promise<Driver> {
+  async update(id: number, updateDriverDto: UpdateDriverDto, CurrentUser: Driver): Promise<Driver> {
     this.logger.log(`Updating driver with ID: ${id}`);
     const driver = await this.driverRepository.preload({
       id,
@@ -53,7 +54,7 @@ export class DriverService {
     return this.driverRepository.save(driver);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, CurrentUser: Driver): Promise<void> {
     this.logger.log(`Removing driver with ID: ${id}`);
     const driver = await this.findOne(id);
     await this.driverRepository.remove(driver);

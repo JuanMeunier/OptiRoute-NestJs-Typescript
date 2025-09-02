@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
   HttpCode,
   HttpStatus,
   ParseIntPipe,
@@ -23,10 +24,15 @@ import {
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 
+import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { User } from '../entities/user.entity';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { UserRole } from '../entities/user.entity';
 
 @ApiTags('Users')
 @Controller('users')
@@ -80,6 +86,8 @@ export class UsersController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN) // ⬅️ Para toda la clase
+  @UseGuards(JwtAuthGuard, RolesGuard) // ⬅️ Para toda la clase
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -102,7 +110,10 @@ export class UsersController {
     }
   }
 
+
   @Get(':id')
+  @Roles(UserRole.ADMIN) // ⬅️ Para toda la clase
+  @UseGuards(JwtAuthGuard, RolesGuard) // ⬅️ Para toda la clase
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({
     name: 'id',
@@ -149,6 +160,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard) // ⬅️ Para toda la clase
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiParam({
     name: 'id',
@@ -173,11 +185,13 @@ export class UsersController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() currentUser: User,
   ): Promise<User> {
     this.logger.log(`PATCH /users/${id} - Updating user`);
 
     try {
-      const user = await this.usersService.update(id, updateUserDto);
+
+      const user = await this.usersService.update(id, updateUserDto, currentUser);
       this.logger.log(`PATCH /users/${id} - User updated: ${user.email}`);
       return user;
     } catch (error) {
@@ -187,6 +201,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete user by ID' })
   @ApiParam({
@@ -205,11 +220,16 @@ export class UsersController {
   @ApiBadRequestResponse({
     description: 'Invalid user ID.',
   })
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() currentUser: User,
+  ): Promise<void> {
     this.logger.log(`DELETE /users/${id} - Deleting user`);
 
+
+
     try {
-      await this.usersService.remove(id);
+      await this.usersService.remove(id, currentUser);
       this.logger.log(`DELETE /users/${id} - User deleted successfully`);
     } catch (error) {
       this.logger.error(`DELETE /users/${id} - Error: ${error.message}`);

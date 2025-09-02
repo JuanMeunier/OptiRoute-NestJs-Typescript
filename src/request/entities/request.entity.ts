@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Vehicle } from 'src/vehicles/entities/vehicle.entity';
 
@@ -40,6 +40,7 @@ export class Request {
 
     // Relaciones
     @ManyToOne(() => User, (user) => user.requests)
+    @JoinColumn({ name: 'userId' })
     user: User;
 
     @ManyToOne(() => Vehicle, (vehicle) => vehicle.requests)

@@ -12,9 +12,11 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
-
   // Configuración de Swagger
   const config = new DocumentBuilder()
     .setTitle('🚚 OptiRoute API')
