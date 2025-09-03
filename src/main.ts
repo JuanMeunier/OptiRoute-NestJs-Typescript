@@ -26,7 +26,7 @@ async function bootstrap() {
     .addTag('Vehicles')
     .addTag('Gps')
     .addTag('Driver')
-    .addTag('Request')
+    .addTag('Requests')
     .addTag('Auth')
     .build();
 
