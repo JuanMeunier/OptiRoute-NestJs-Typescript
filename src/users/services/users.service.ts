@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException, ConflictException, Logger, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger, ForbiddenException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { User } from '../entities/user.entity';
-import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
 
 @Injectable()
 export class UsersService {
@@ -15,6 +16,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -42,7 +44,10 @@ export class UsersService {
 
       const savedUser = await this.userRepository.save(user);
 
-      // No loggear la contraseña por seguridad
+      // Invalidar cache relacionado
+      await this.cacheManager.del('users:all');
+      await this.cacheManager.del(`users:email:${createUserDto.email}`);
+
       this.logger.log(`User created successfully with ID: ${savedUser.id}`);
 
       // Eliminar la contraseña del objeto de respuesta
@@ -62,12 +67,24 @@ export class UsersService {
     this.logger.log('Fetching all users');
 
     try {
+      // Verificar cache primero
+      const cacheKey = 'users:all';
+      const cachedUsers = await this.cacheManager.get<User[]>(cacheKey);
+
+      if (cachedUsers) {
+        this.logger.log(`Found ${cachedUsers.length} users in cache`);
+        return cachedUsers;
+      }
+
       const users = await this.userRepository.find({
         select: ['id', 'name', 'email', 'role'], // Excluir password
         relations: ['requests'],
       });
 
-      this.logger.log(`Found ${users.length} users`);
+      // Guardar en cache por 5 minutos (300 segundos)
+      await this.cacheManager.set(cacheKey, users, 300);
+
+      this.logger.log(`Found ${users.length} users and cached them`);
       return users;
 
     } catch (error) {
@@ -80,6 +97,15 @@ export class UsersService {
     this.logger.log(`Fetching user with ID: ${id}`);
 
     try {
+      // Verificar cache primero
+      const cacheKey = `users:id:${id}`;
+      const cachedUser = await this.cacheManager.get<User>(cacheKey);
+
+      if (cachedUser) {
+        this.logger.log(`Found user ${id} in cache: ${cachedUser.email}`);
+        return cachedUser;
+      }
+
       const user = await this.userRepository.findOne({
         where: { id },
         select: ['id', 'name', 'email', 'role'],
@@ -91,7 +117,10 @@ export class UsersService {
         throw new NotFoundException('User not found');
       }
 
-      this.logger.log(`User found: ${user.email}`);
+      // Guardar en cache por 10 minutos (600 segundos)
+      await this.cacheManager.set(cacheKey, user, 600);
+
+      this.logger.log(`User found and cached: ${user.email}`);
       return user;
 
     } catch (error) {
@@ -107,13 +136,24 @@ export class UsersService {
     this.logger.log(`Fetching user by email: ${email}`);
 
     try {
+      // Verificar cache primero
+      const cacheKey = `users:email:${email}`;
+      const cachedUser = await this.cacheManager.get<User>(cacheKey);
+
+      if (cachedUser) {
+        this.logger.log(`Found user by email in cache: ${email}`);
+        return cachedUser;
+      }
+
       const user = await this.userRepository.findOne({
         where: { email },
         // Incluir password para autenticación
       });
 
       if (user) {
-        this.logger.log(`User found by email: ${email}`);
+        // Guardar en cache por 10 minutos (600 segundos)
+        await this.cacheManager.set(cacheKey, user, 600);
+        this.logger.log(`User found by email and cached: ${email}`);
       } else {
         this.logger.log(`No user found with email: ${email}`);
       }
@@ -156,13 +196,22 @@ export class UsersService {
 
       await this.userRepository.update(id, updateUserDto);
 
+      // Invalidar caches relacionados
+      await this.cacheManager.del(`users:id:${id}`);
+      await this.cacheManager.del(`users:email:${user.email}`);
+      await this.cacheManager.del('users:all');
+
+      if (updateUserDto.email && updateUserDto.email !== user.email) {
+        await this.cacheManager.del(`users:email:${updateUserDto.email}`);
+      }
+
       const updatedUser = await this.findOne(id);
       this.logger.log(`User updated successfully: ${updatedUser.email}`);
 
       return updatedUser;
 
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ConflictException) {
+      if (error instanceof NotFoundException || error instanceof ConflictException || error instanceof ForbiddenException) {
         throw error;
       }
       this.logger.error(`Error updating user ${id}: ${error.message}`, error.stack);
@@ -189,10 +238,15 @@ export class UsersService {
         throw new NotFoundException('User not found');
       }
 
+      // Invalidar caches relacionados
+      await this.cacheManager.del(`users:id:${id}`);
+      await this.cacheManager.del(`users:email:${user.email}`);
+      await this.cacheManager.del('users:all');
+
       this.logger.log(`User deleted successfully: ${user.email}`);
 
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
         throw error;
       }
       this.logger.error(`Error deleting user ${id}: ${error.message}`, error.stack);
