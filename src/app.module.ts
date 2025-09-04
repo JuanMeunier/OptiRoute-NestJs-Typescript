@@ -8,28 +8,16 @@ import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { ChatSocketModule } from './chat-socket/chat-socket.module';
-import { CacheModule } from '@nestjs/cache-manager';
-import { redisStore } from 'cache-manager-redis-store';
+import { CustomRedisModule } from './redis/redis.module';
+import { CustomThrottlerModule } from './throttler/rate-limiter.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true, // ConfigService disponible globalmente
       envFilePath: '.env', // opcional si usás otro archivo
     }),
-    CacheModule.registerAsync({
-      isGlobal: true,
-      useFactory: async () => ({
-        store: await redisStore({
-          socket: {
-            host: 'localhost',
-            port: 6379,
-          },
-        }),
-        ttl: 10, // tiempo de vida en segundos
-      }),
-    }),
-
-
+    CustomRedisModule,
+    CustomThrottlerModule,
     UsersModule,
     AuthModule,
     DatabaseModule,
