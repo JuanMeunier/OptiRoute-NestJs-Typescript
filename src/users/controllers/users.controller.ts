@@ -24,6 +24,7 @@ import {
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
@@ -43,6 +44,7 @@ export class UsersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ medium: { limit: 5, ttl: 10000 } }) // 5 usuarios por 10 segundos
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -88,6 +90,7 @@ export class UsersController {
   @Get()
   @Roles(UserRole.ADMIN) // ⬅️ Para toda la clase
   @UseGuards(JwtAuthGuard, RolesGuard) // ⬅️ Para toda la clase
+  @Throttle({ long: { limit: 20, ttl: 60000 } }) // 20 consultas por minuto
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -114,6 +117,7 @@ export class UsersController {
   @Get(':id')
   @Roles(UserRole.ADMIN) // ⬅️ Para toda la clase
   @UseGuards(JwtAuthGuard, RolesGuard) // ⬅️ Para toda la clase
+  @Throttle({ long: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({
     name: 'id',
@@ -161,6 +165,7 @@ export class UsersController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard) // ⬅️ Para toda la clase
+  @Throttle({ medium: { limit: 3, ttl: 10000 } }) // 3 updates por 10 segundos
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiParam({
     name: 'id',
@@ -202,6 +207,7 @@ export class UsersController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
+  @Throttle({ short: { limit: 1, ttl: 1000 } }) // Solo 1 delete por segundo
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete user by ID' })
   @ApiParam({

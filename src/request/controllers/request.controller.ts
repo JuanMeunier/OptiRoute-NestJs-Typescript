@@ -34,6 +34,7 @@ import { Request } from '../entities/request.entity';
 import { CurrentUser } from 'src/auth/decorators/currentUser.decorator';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { User, UserRole } from 'src/users/entities/user.entity';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Requests')
 @Roles(UserRole.CLIENT)
@@ -47,6 +48,7 @@ export class RequestController {
   ) { }
 
   @Post()
+  @Throttle({ medium: { limit: 10, ttl: 10000 } }) // 10 requests por 10 segundos
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new request' })
   @ApiResponse({
@@ -85,6 +87,7 @@ export class RequestController {
   }
 
   @Get()
+  @Throttle({ long: { limit: 30, ttl: 60000 } }) // 30 requests por minuto
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Retrieve all requests' })
   @ApiResponse({
@@ -108,6 +111,7 @@ export class RequestController {
   }
 
   @Get(':id')
+  @Throttle({ long: { limit: 30, ttl: 60000 } }) // 30 requests por minuto
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get a request by ID' })
   @ApiParam({ name: 'id', type: Number, description: 'Request ID' })
@@ -152,6 +156,7 @@ export class RequestController {
   }
 
   @Patch(':id')
+  @Throttle({ medium: { limit: 5, ttl: 10000 } }) // 5 updates por 10 segundos
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a request by ID' })
   @ApiParam({ name: 'id', type: Number, description: 'Request ID' })
@@ -216,6 +221,7 @@ export class RequestController {
   }
 
   @Delete(':id')
+  @Throttle({ short: { limit: 2, ttl: 1000 } }) // Solo 2 deletes por segundo
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a request by ID' })
   @ApiParam({ name: 'id', type: Number, description: 'Request ID' })
