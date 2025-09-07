@@ -21,7 +21,7 @@ export class Vehicle {
     capacity: number;
 
     @OneToOne(() => GPS, (gps) => gps.vehicle)
-    gps: GPS;
+    gps: GPS | null;
 
     @OneToMany(() => Driver, (driver) => driver.vehicle)
     drivers: Driver[];
