@@ -33,7 +33,7 @@ export class Request {
 
     // ID del driver que tomó la request (null al inicio)
     @Column({ nullable: true })
-    driverId: number;
+    driverId: number | null;
 
     @Column({ nullable: true })
     userId: number;
@@ -44,5 +44,5 @@ export class Request {
     user: User;
 
     @ManyToOne(() => Vehicle, (vehicle) => vehicle.requests)
-    vehicle: Vehicle;
+    vehicle: Vehicle | null;
 }
