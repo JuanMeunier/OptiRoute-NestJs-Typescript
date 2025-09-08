@@ -19,7 +19,7 @@ describe('VehiclesController', () => {
     gps: null,
     drivers: [],
     requests: [],
-  };
+  }; 
 
   const mockVehiclesService = {
     create: jest.fn(),

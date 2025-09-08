@@ -13,5 +13,5 @@ export class Driver {
     licenseNumber: string;
 
     @ManyToOne(() => Vehicle, (vehicle) => vehicle.drivers)
-    vehicle: Vehicle;
+    vehicle: Vehicle | null;
 }
